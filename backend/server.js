@@ -25,6 +25,16 @@ db.exec(`
   )
 `);
 
+// Précompilation de la requête de mise à jour.
+// L'utilisation des variables de liaison prévient l'injection SQL.
+const updateOfferStmt = db.prepare(`
+  UPDATE offers 
+  SET apply = @apply, answer = @answer 
+  WHERE id = @id
+`);
+
+const getOfferStmt = db.prepare(`SELECT apply, answer FROM offers WHERE id = ?`);
+
 // 5. Précompilation de la requête d'insertion (DML)
 const insertOffer = db.prepare(`
   INSERT INTO offers (id, url, apply, answer) 
@@ -154,6 +164,63 @@ fastify.get('/api/offers', getOffersRouteOptions, async (request, reply) => {
     return reply.code(500).send({ error: 'Erreur interne lors de l\'opération de lecture SQL.' });
   }
 });
+
+
+
+
+
+// Définition du schéma JSON pour l'opération PATCH
+const patchOfferRouteOptions = {
+  schema: {
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer' }
+      }
+    },
+    body: {
+      type: 'object',
+      // Au moins un des deux champs doit être présent dans la charge utile (Payload)
+      anyOf: [
+        { required: ['apply'] },
+        { required: ['answer'] }
+      ],
+      properties: {
+        apply: { type: 'boolean' },
+        answer: { type: 'boolean' }
+      }
+    }
+  }
+};
+
+// Instanciation du point d'accès pour la mutation partielle
+fastify.patch('/api/offers/:id', patchOfferRouteOptions, async (request, reply) => {
+  const { id } = request.params;
+  const { apply, answer } = request.body;
+
+  try {
+    // 1. Extraction de l'état actuel de la ressource (Verrouillage en lecture implicite)
+    const currentRecord = getOfferStmt.get(id);
+    
+    if (!currentRecord) {
+      return reply.code(404).send({ error: 'Ressource non identifiée.' });
+    }
+
+    // 2. Résolution conditionnelle des états (Coalescence logique)
+    // Translation des types booléens du moteur V8 vers les entiers SQLite (1/0)
+    const newApply = apply !== undefined ? (apply ? 1 : 0) : currentRecord.apply;
+    const newAnswer = answer !== undefined ? (answer ? 1 : 0) : currentRecord.answer;
+
+    // 3. Exécution synchrone de la transaction d'écriture (I/O)
+    updateOfferStmt.run({ id: id, apply: newApply, answer: newAnswer });
+
+    return reply.code(200).send({ id: id, status: 'updated' });
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.code(500).send({ error: 'Exception lors de l\'opération d\'entrée/sortie SQL.' });
+  }
+});
+
 
 
 
