@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Offer Ingestion Tool",
+  "version": "1.1.0",
+  "description": "Injecte un bouton de suivi sur les pages d'offres et communique avec l'API Fastify.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://companies.intra.42.fr/en/offers/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "host_permissions": [
+    "http://100.84.166.112:8042/*"  
+  ]
+}
