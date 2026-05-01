@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Plus, CheckCircle2, Circle, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { ExternalLink, Plus, CheckCircle2, Circle, AlertCircle, RefreshCw, Loader2, Trash2 } from 'lucide-react';
 
 // Configuration de l'endpoint cible. 
 // À modifier selon l'exposition des ports du conteneur Docker hébergeant l'API.
@@ -60,6 +60,27 @@ export default function App() {
       await fetchOffers();
     } catch (error) {
       setErrorStatus(`Erreur de mise à jour : ${error.message}`);
+      setIsLoading(false);
+    }
+  };
+
+// Exécution de la requête HTTP DELETE pour la suppression d'une ressource
+  const handleDeleteOffer = async (id) => {
+    setIsLoading(true);
+    setErrorStatus(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/offers/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
+      }
+
+      // Réconciliation de l'arbre d'état local via une requête GET subséquente
+      await fetchOffers();
+    } catch (error) {
+      setErrorStatus(`Échec de l'opération de suppression : ${error.message}`);
       setIsLoading(false);
     }
   };
@@ -217,6 +238,7 @@ export default function App() {
                       <th className="px-4 py-3 font-semibold">URI d'accès</th>
                       <th className="px-4 py-3 font-semibold">État 'Apply'</th>
                       <th className="px-4 py-3 font-semibold">État 'Answer'</th>
+                      <th scope="col" className="px-4 py-3 font-semibold text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -258,6 +280,16 @@ export default function App() {
                               onClick={() => handleToggleStatus(offer.id, 'answer', offer.answer)}
                               disabled={isLoading}
                             />
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <button
+                              onClick={() => handleDeleteOffer(offer.id)}
+                              disabled={isLoading}
+                              className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Exécuter l'instruction de suppression"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </td>
                         </tr>
                       ))
