@@ -33,6 +33,12 @@ db.exec(`
   )
 `);
 
+// Précompilation de la requête de suppression
+const deleteOfferStmt = db.prepare(`
+  DELETE FROM offers 
+  WHERE id = @id
+`);
+
 // Précompilation de la requête de sélection totale d'un enregistrement unique
 const getSingleOfferFullStmt = db.prepare(`
   SELECT id, url, apply, answer 
@@ -291,6 +297,59 @@ fastify.get('/api/offers/:id', getSingleOfferRouteOptions, async (request, reply
   } catch (error) {
     fastify.log.error(error);
     return reply.code(500).send({ error: 'Exception lors de l\'opération de lecture SQL.' });
+  }
+});
+
+
+
+
+
+// Définition du schéma JSON pour l'opération DELETE
+const deleteOfferRouteOptions = {
+  schema: {
+    params: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id: { type: 'integer' }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          status: { type: 'string' }
+        }
+      },
+      404: {
+        type: 'object',
+        properties: {
+          error: { type: 'string' }
+        }
+      }
+    }
+  }
+};
+
+// Instanciation de l'Endpoint de suppression
+fastify.delete('/api/offers/:id', deleteOfferRouteOptions, async (request, reply) => {
+  const { id } = request.params;
+
+  try {
+    // Exécution synchrone de l'opération d'entrée/sortie
+    // L'objet info contient les propriétés 'changes' et 'lastInsertRowid'
+    const info = deleteOfferStmt.run({ id: id });
+
+    // Évaluation du nombre de vecteurs mutés
+    if (info.changes === 0) {
+      return reply.code(404).send({ error: 'Ressource introuvable. Aucune suppression effectuée.' });
+    }
+
+    return reply.code(200).send({ id: id, status: 'deleted' });
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.code(500).send({ error: 'Exception lors de l\'exécution de l\'instruction DML.' });
   }
 });
 
