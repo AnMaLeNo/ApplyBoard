@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cors from '@fastify/cors'; // pas besoin j'ais l'impression
 import Database from 'better-sqlite3';
 import { join } from 'path';
 
@@ -7,6 +8,13 @@ const dbPath = join(process.cwd(), 'data', 'offers.sqlite');
 
 // 2. Initialisation de l'instance HTTP et du SGBDR persistant
 const fastify = Fastify({ logger: true });
+
+// Configuration CORS : Autorise n'importe quelle extension ou site web à utiliser cette API
+await fastify.register(cors, {
+  origin: "*",
+  methods: ["GET", "POST", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+});
 
 // Le constructeur crée le fichier s'il est inexistant, à condition
 // que le processus dispose des droits d'écriture (I/O) sur le répertoire.
@@ -23,6 +31,13 @@ db.exec(`
     apply INTEGER DEFAULT 0,
     answer INTEGER DEFAULT 0
   )
+`);
+
+// Précompilation de la requête de sélection totale d'un enregistrement unique
+const getSingleOfferFullStmt = db.prepare(`
+  SELECT id, url, apply, answer 
+  FROM offers 
+  WHERE id = @id
 `);
 
 // Précompilation de la requête de mise à jour.
@@ -48,9 +63,9 @@ const offerRouteOptions = {
       type: 'object',
       required: ['url'],
       properties: {
-        url: { 
-          type: 'string', 
-          pattern: '^https:\\/\\/companies\\.intra\\.42\\.fr\\/en\\/offers\\/\\d+$' 
+        url: {
+          type: 'string',
+          pattern: '^https:\\/\\/companies\\.intra\\.42\\.fr\\/en\\/offers\\/\\d+$'
         }
       }
     },
@@ -72,7 +87,7 @@ fastify.post('/api/offers', offerRouteOptions, async (request, reply) => {
 
   // Évaluation de l'expression régulière
   const match = url.match(/\/(\d+)$/);
-  
+
   if (!match) {
     return reply.code(400).send({ error: 'Extraction de l\'ID impossible.' });
   }
@@ -82,13 +97,13 @@ fastify.post('/api/offers', offerRouteOptions, async (request, reply) => {
   try {
     // Exécution de la transaction d'insertion (I/O sur disque)
     insertOffer.run({ id: extractedId, url: url });
-    
+
     return reply.code(201).send({ id: extractedId, status: 'created' });
   } catch (error) {
     if (error.code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
       return reply.code(409).send({ error: 'Violation de contrainte: Cet ID existe déjà dans la base.' });
     }
-    
+
     fastify.log.error(error);
     return reply.code(500).send({ error: 'Erreur interne lors de l\'opération d\'entrée/sortie SQL.' });
   }
@@ -141,7 +156,7 @@ fastify.get('/api/offers', getOffersRouteOptions, async (request, reply) => {
   if (apply !== undefined) {
     sql += ' AND apply = @apply';
     // Translation : Booléen V8 vers Integer SQLite
-    params.apply = apply ? 1 : 0; 
+    params.apply = apply ? 1 : 0;
   }
 
   if (answer !== undefined) {
@@ -152,11 +167,11 @@ fastify.get('/api/offers', getOffersRouteOptions, async (request, reply) => {
   try {
     // 4. Précompilation et exécution de la requête
     const stmt = db.prepare(sql);
-    
+
     // L'instruction stmt.all() exécute la requête et charge l'intégralité 
     // du result set dans la mémoire du processus Node.js sous forme de tableau.
     const rows = stmt.all(params);
-    
+
     // 5. Sérialisation de la charge utile (Payload) JSON
     return reply.code(200).send(rows);
   } catch (error) {
@@ -201,7 +216,7 @@ fastify.patch('/api/offers/:id', patchOfferRouteOptions, async (request, reply) 
   try {
     // 1. Extraction de l'état actuel de la ressource (Verrouillage en lecture implicite)
     const currentRecord = getOfferStmt.get(id);
-    
+
     if (!currentRecord) {
       return reply.code(404).send({ error: 'Ressource non identifiée.' });
     }
@@ -218,6 +233,64 @@ fastify.patch('/api/offers/:id', patchOfferRouteOptions, async (request, reply) 
   } catch (error) {
     fastify.log.error(error);
     return reply.code(500).send({ error: 'Exception lors de l\'opération d\'entrée/sortie SQL.' });
+  }
+});
+
+
+
+
+
+// Définition du schéma JSON pour la validation des paramètres d'URL et de la réponse
+const getSingleOfferRouteOptions = {
+  schema: {
+    params: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id: { type: 'integer' }
+      }
+    },
+    response: {
+      // Définition de la charge utile (Payload) en cas de succès
+      200: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          url: { type: 'string' },
+          apply: { type: 'integer' },
+          answer: { type: 'integer' }
+        }
+      },
+      // Définition de la charge utile en cas d'échec de résolution de la ressource
+      404: {
+        type: 'object',
+        properties: {
+          error: { type: 'string' }
+        }
+      }
+    }
+  }
+};
+
+// Instanciation du point d'accès en lecture ciblée
+fastify.get('/api/offers/:id', getSingleOfferRouteOptions, async (request, reply) => {
+  // L'intergiciel de Fastify a déjà effectué la coercition du paramètre :id en entier
+  const { id } = request.params;
+
+  try {
+    // Exécution synchrone de l'instruction préparée
+    const record = getSingleOfferFullStmt.get({ id: id });
+
+    // Évaluation de l'existence de l'enregistrement dans le result set
+    if (!record) {
+      return reply.code(404).send({ error: 'Offre introuvable.' });
+    }
+
+    // Sérialisation et transmission des données
+    return reply.code(200).send(record);
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.code(500).send({ error: 'Exception lors de l\'opération de lecture SQL.' });
   }
 });
 
