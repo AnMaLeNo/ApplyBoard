@@ -17,6 +17,11 @@ function initIngestionFlow() {
   chrome.runtime.sendMessage(
     { action: "CHECK_OFFER_STATUS", data: { id: offerId } },
     (response) => {
+      if (response.status === 401 || response.error === "Unauthorized") {
+        console.log("Exécution suspendue : Contexte non authentifié. Attente de la résolution JWT.");
+        return; // Terminaison explicite, aucune mutation du DOM effectuée.
+      }
+
       if (response.error) {
         console.error("Erreur lors de la vérification d'état réseau :", response.error);
         return;
@@ -86,3 +91,12 @@ if (document.readyState === "loading") {
 } else {
   initIngestionFlow();
 }
+
+// Enregistrement du gestionnaire d'interception IPC
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Validation de l'identifiant canonique de l'action
+  if (message.action === "LOGIN_SUCCESS") {
+    // Ré-invocation de l'orchestrateur de mutation suite au changement d'état d'authentification
+    initIngestionFlow();
+  }
+});
