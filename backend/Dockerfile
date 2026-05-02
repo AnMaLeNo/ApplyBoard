@@ -1,6 +1,6 @@
 FROM node:24.13.1-bookworm-slim AS base
 WORKDIR /usr/src/app
-RUN mkdir data && chown node:node . data
+RUN chown node:node .
 COPY --chown=node:node package.json package-lock.json ./
 USER node
 

@@ -1,17 +1,36 @@
 services:
-  # 1. Mise à jour du service API existant
+  database:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: offers_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d offers_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - app-net
+
   api:
     build:
       context: ./backend
       target: development
     volumes:
-      - sqlite_data:/usr/src/app/data
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
+    environment:
+      DATABASE_URL: postgres://admin:securepassword@database:5432/offers_db
+      JWT_SECRET: super_secret_cryptographic_key_32_bytes_min
+    depends_on:
+      database:
+        condition: service_healthy
     networks:
       - app-net
 
-  # 2. Ajout du nouveau service Frontend
   frontend:
     build:
       context: ./frontend
@@ -24,7 +43,6 @@ services:
     networks:
       - app-net
 
-  # 3. Ajout du Reverse Proxy Global
   reverse-proxy:
     image: nginx:alpine
     ports:
@@ -42,5 +60,4 @@ networks:
     driver: bridge
 
 volumes:
-  sqlite_data:
-    # Inchangé
+  pg_data:
