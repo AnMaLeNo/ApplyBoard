@@ -17,8 +17,10 @@ export const initDB = async () => {
 
       CREATE TABLE IF NOT EXISTS offers (
         id INTEGER PRIMARY KEY,
-        url TEXT UNIQUE NOT NULL
+        url TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      CREATE INDEX IF NOT EXISTS idx_offers_created_at ON offers(created_at DESC);
 
       CREATE TABLE IF NOT EXISTS user_offers (
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,

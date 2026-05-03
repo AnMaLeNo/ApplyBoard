@@ -134,6 +134,36 @@ async function offerRoutes(fastify, opts) {
     }
   };
 
+  const getGlobalOffersRouteOptions = {
+    onRequest: [fastify.authenticate],
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { 
+            type: 'integer', 
+            minimum: 1, 
+            maximum: 500,
+            default: 50 
+          }
+        }
+      },
+      response: {
+        200: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              url: { type: 'string' },
+              created_at: { type: 'string', format: 'date-time' } 
+            }
+          }
+        }
+      }
+    }
+  };
+
   fastify.post('/api/offers', offerRouteOptions, async (request, reply) => {
   const { url } = request.body;
   const match = url.match(/\/(\d+)$/);
@@ -249,6 +279,23 @@ async function offerRoutes(fastify, opts) {
       return reply.code(500).send({ error: 'Exception lors de l\'exécution de l\'instruction DML.' });
   }
   });
+
+  fastify.get('/api/global-offers', getGlobalOffersRouteOptions, async (request, reply) => {
+    const { limit } = request.query;
+
+    try {
+      const res = await pool.query(
+        'SELECT id, url, created_at FROM offers ORDER BY created_at DESC LIMIT $1',
+        [limit]
+      );
+      
+      return reply.code(200).send(res.rows);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Exception lors de l\'opération DQL sur le catalogue global.' });
+    }
+  });
+
 }
 
 export default offerRoutes;
