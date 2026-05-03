@@ -8,10 +8,10 @@ FROM base AS production
 ENV NODE_ENV=production
 RUN npm ci --only=production && npm cache clean --force
 COPY --chown=node:node . .
-CMD ["node", "server.js"]
+CMD ["node", "./src/server.js"]
 
 FROM base AS development
 ENV NODE_ENV=development
 RUN npm ci && npm cache clean --force
 COPY --chown=node:node . .
-CMD ["node", "--watch", "server.js"]
+CMD ["node", "--watch", "./src/server.js"]
