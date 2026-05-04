@@ -9,6 +9,11 @@ export function listOffers({ apply, answer } = {}) {
   });
 }
 
+export const listGlobalOffers = ({ limit } = {}) =>
+  apiFetch('/global-offers', {
+    params: limit ? { limit } : undefined,
+  });
+
 export const createOffer = (url) =>
   apiFetch('/offers', { method: 'POST', body: { url } });
 

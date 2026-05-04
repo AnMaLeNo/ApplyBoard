@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth.js';
 import { useOffers } from './hooks/useOffers.js';
+import { useGlobalOffers } from './hooks/useGlobalOffers.js';
 import AuthScreen from './components/AuthScreen.jsx';
 import Navbar from './components/Navbar.jsx';
 import DashboardPage from './components/DashboardPage.jsx';
@@ -18,10 +19,20 @@ export default function App() {
   });
   const { reset: resetOffers } = offersState;
 
+  const globalOffersState = useGlobalOffers({
+    enabled: auth.authState !== 'out' && currentRoute === 'all_offers',
+    onUnauthorized: auth.markUnauthenticated,
+    onAuthenticated: auth.markAuthenticated,
+  });
+  const { reset: resetGlobalOffers } = globalOffersState;
+
   // Purge le registre local lorsque la session se ferme.
   useEffect(() => {
-    if (auth.authState === 'out') resetOffers();
-  }, [auth.authState, resetOffers]);
+    if (auth.authState === 'out') {
+      resetOffers();
+      resetGlobalOffers();
+    }
+  }, [auth.authState, resetOffers, resetGlobalOffers]);
 
   if (auth.authState === null) {
     return (
@@ -55,7 +66,9 @@ export default function App() {
       />
       <main className="px-8 pb-8">
         {currentRoute === 'dashboard' && <DashboardPage offersState={offersState} />}
-        {currentRoute === 'all_offers' && <AllOffersPage />}
+        {currentRoute === 'all_offers' && (
+          <AllOffersPage globalOffersState={globalOffersState} />
+        )}
       </main>
     </div>
   );
