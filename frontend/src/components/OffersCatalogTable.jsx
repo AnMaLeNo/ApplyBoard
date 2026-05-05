@@ -1,4 +1,5 @@
-import { Database, ExternalLink, RefreshCw } from 'lucide-react';
+import { Database, RefreshCw } from 'lucide-react';
+import OfferTitleCell from './OfferTitleCell.jsx';
 import { fallback, formatDate } from '../utils/format.js';
 
 const LIMIT_OPTIONS = [25, 50, 100, 250, 500];
@@ -78,22 +79,7 @@ export default function OffersCatalogTable({
                   <td className="px-4 py-3 font-mono font-medium text-slate-900">
                     {offer.id}
                   </td>
-                  <td className="px-4 py-3 max-w-[320px]">
-                    <a
-                      href={offer.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-start gap-1.5 text-blue-600 hover:text-blue-800 font-medium"
-                      title={offer.title || offer.url}
-                    >
-                      <span className="line-clamp-2">
-                        {fallback(offer.title) === '—' ? offer.url : offer.title}
-                      </span>
-                      <ExternalLink className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    </a>
-                    <div className="text-xs text-slate-500 mt-1">{fallback(offer.company)}</div>
-                  </td>
+                  <OfferTitleCell offer={offer} />
                   <td className="px-4 py-3">
                     <div className="text-slate-700">{fallback(offer.contract_type)}</div>
                     {offer.salary && (

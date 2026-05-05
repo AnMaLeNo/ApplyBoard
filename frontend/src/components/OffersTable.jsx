@@ -1,5 +1,6 @@
-import { ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
+import { RefreshCw, Trash2 } from 'lucide-react';
 import StatusToggle from './StatusToggle.jsx';
+import OfferTitleCell from './OfferTitleCell.jsx';
 import { fallback, formatDate } from '../utils/format.js';
 
 const FILTER_OPTIONS = [
@@ -99,19 +100,7 @@ export default function OffersTable({
                   className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top"
                 >
                   <td className="px-4 py-3 font-mono font-medium text-slate-900">{offer.id}</td>
-                  <td className="px-4 py-3 max-w-[280px]">
-                    <a
-                      href={offer.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-start gap-1.5 text-blue-600 hover:text-blue-800 font-medium"
-                      title={offer.title || offer.url}
-                    >
-                      <span className="line-clamp-2">{fallback(offer.title) === '—' ? offer.url : offer.title}</span>
-                      <ExternalLink className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    </a>
-                    <div className="text-xs text-slate-500 mt-1">{fallback(offer.company)}</div>
-                  </td>
+                  <OfferTitleCell offer={offer} maxWidthClass="max-w-[280px]" />
                   <td className="px-4 py-3">
                     <div className="text-slate-700">{fallback(offer.contract_type)}</div>
                     <div className="text-xs text-slate-500 mt-1">
