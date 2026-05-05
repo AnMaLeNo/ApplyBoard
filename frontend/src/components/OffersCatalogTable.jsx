@@ -7,8 +7,8 @@ export default function OffersCatalogTable({
   offers,
   isLoading,
   limit,
-  setLimit,
-  refresh,
+  onChangeLimit,
+  onRefresh,
   onSelectOffer,
 }) {
   return (
@@ -21,7 +21,7 @@ export default function OffersCatalogTable({
         <div className="flex flex-wrap items-center gap-3">
           <select
             value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
+            onChange={(e) => onChangeLimit(Number(e.target.value))}
             className="text-sm border-slate-300 rounded-md focus:ring-blue-500 py-1.5"
           >
             {LIMIT_OPTIONS.map((value) => (
@@ -32,7 +32,7 @@ export default function OffersCatalogTable({
           </select>
 
           <button
-            onClick={refresh}
+            onClick={onRefresh}
             disabled={isLoading}
             className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100"
           >

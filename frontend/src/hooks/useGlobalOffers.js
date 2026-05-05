@@ -5,12 +5,12 @@ import { UnauthorizedError } from '../api/client.js';
 export function useGlobalOffers({ enabled, onUnauthorized, onAuthenticated }) {
   const [offers, setOffers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorStatus, setErrorStatus] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [limit, setLimit] = useState(50);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
-    setErrorStatus(null);
+    setErrorMessage(null);
     try {
       const data = await offersApi.listGlobalOffers({ limit });
       setOffers(data ?? []);
@@ -20,7 +20,7 @@ export function useGlobalOffers({ enabled, onUnauthorized, onAuthenticated }) {
         onUnauthorized?.();
         return;
       }
-      setErrorStatus(error.message);
+      setErrorMessage(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -34,13 +34,13 @@ export function useGlobalOffers({ enabled, onUnauthorized, onAuthenticated }) {
 
   const reset = useCallback(() => {
     setOffers([]);
-    setErrorStatus(null);
+    setErrorMessage(null);
   }, []);
 
   return {
     offers,
     isLoading,
-    errorStatus,
+    errorMessage,
     limit,
     setLimit,
     refresh,

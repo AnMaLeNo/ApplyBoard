@@ -1,5 +1,6 @@
 import { ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
 import StatusToggle from './StatusToggle.jsx';
+import { fallback } from '../utils/format.js';
 
 const FILTER_OPTIONS = [
   { value: 'all', labelPrefix: 'All' },
@@ -7,11 +8,11 @@ const FILTER_OPTIONS = [
   { value: 'false', labelPrefix: 'False (0)' },
 ];
 
-function FilterSelect({ value, onChange, label }) {
+function FilterSelect({ value, onChangeValue, label }) {
   return (
     <select
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => onChangeValue(e.target.value)}
       className="text-sm border-slate-300 rounded-md focus:ring-blue-500 py-1.5"
     >
       {FILTER_OPTIONS.map((opt) => (
@@ -23,17 +24,13 @@ function FilterSelect({ value, onChange, label }) {
   );
 }
 
-function fallback(value) {
-  return value && String(value).trim() ? value : '—';
-}
-
 export default function OffersTable({
   offers,
   isLoading,
   filterApply,
   filterAnswer,
-  setFilterApply,
-  setFilterAnswer,
+  onChangeApplyFilter,
+  onChangeAnswerFilter,
   onRefresh,
   onToggleStatus,
   onDelete,
@@ -46,8 +43,8 @@ export default function OffersTable({
         </h2>
 
         <div className="flex flex-wrap items-center gap-3">
-          <FilterSelect value={filterApply} onChange={setFilterApply} label="Apply" />
-          <FilterSelect value={filterAnswer} onChange={setFilterAnswer} label="Answer" />
+          <FilterSelect value={filterApply} onChangeValue={onChangeApplyFilter} label="Apply" />
+          <FilterSelect value={filterAnswer} onChangeValue={onChangeAnswerFilter} label="Answer" />
 
           <button
             onClick={onRefresh}

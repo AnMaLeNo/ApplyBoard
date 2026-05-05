@@ -8,13 +8,13 @@ import { UnauthorizedError } from '../api/client.js';
 export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
   const [offers, setOffers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorStatus, setErrorStatus] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [filterApply, setFilterApply] = useState('all');
   const [filterAnswer, setFilterAnswer] = useState('all');
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
-    setErrorStatus(null);
+    setErrorMessage(null);
     try {
       const data = await offersApi.listOffers({
         apply: filterApply,
@@ -27,7 +27,7 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
         onUnauthorized?.();
         return;
       }
-      setErrorStatus(error.message);
+      setErrorMessage(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -35,16 +35,13 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
 
   useEffect(() => {
     if (!enabled) return;
-    // Pattern de data-fetching standard : la cascade de setState provoquée par refresh()
-    // est attendue (loading -> data). React Query / SWR seraient préférables à terme.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [enabled, refresh]);
 
-  // Pattern commun aux mutations : exécution -> rafraîchissement -> gestion d'erreur unifiée.
   const runMutation = async (operation, errorPrefix) => {
     setIsLoading(true);
-    setErrorStatus(null);
+    setErrorMessage(null);
     try {
       await operation();
       await refresh();
@@ -53,14 +50,14 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
         onUnauthorized?.();
         return;
       }
-      setErrorStatus(`${errorPrefix} : ${error.message}`);
+      setErrorMessage(`${errorPrefix} : ${error.message}`);
       setIsLoading(false);
     }
   };
 
-  const toggleStatus = (id, field, currentValue) =>
+  const updateOffer = (id, patch) =>
     runMutation(
-      () => offersApi.updateOffer(id, { [field]: !currentValue }),
+      () => offersApi.updateOffer(id, patch),
       'Erreur de mise à jour',
     );
 
@@ -72,19 +69,19 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
 
   const reset = useCallback(() => {
     setOffers([]);
-    setErrorStatus(null);
+    setErrorMessage(null);
   }, []);
 
   return {
     offers,
     isLoading,
-    errorStatus,
+    errorMessage,
     filterApply,
     filterAnswer,
     setFilterApply,
     setFilterAnswer,
     refresh,
-    toggleStatus,
+    updateOffer,
     deleteOffer,
     reset,
   };

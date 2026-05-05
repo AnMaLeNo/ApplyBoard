@@ -1,15 +1,15 @@
+import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 
-export default function AuthScreen({
-  authMode,
-  email,
-  password,
-  authError,
-  setEmail,
-  setPassword,
-  toggleAuthMode,
-  onSubmit,
-}) {
+export default function AuthScreen({ authMode, authError, onSubmit, onToggleAuthMode }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({ email, password });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans flex items-center justify-center">
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 w-full max-w-sm space-y-6">
@@ -24,7 +24,7 @@ export default function AuthScreen({
           </div>
         )}
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Identifiant (Email)
@@ -58,7 +58,7 @@ export default function AuthScreen({
         </form>
 
         <button
-          onClick={toggleAuthMode}
+          onClick={onToggleAuthMode}
           className="w-full text-sm text-slate-500 hover:text-slate-700 text-center transition-colors"
         >
           {authMode === 'login'

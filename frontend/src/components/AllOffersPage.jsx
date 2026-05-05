@@ -8,7 +8,7 @@ export default function AllOffersPage({ globalOffersState }) {
   const {
     offers,
     isLoading,
-    errorStatus,
+    errorMessage,
     limit,
     setLimit,
     refresh,
@@ -36,11 +36,11 @@ export default function AllOffersPage({ globalOffersState }) {
         {isLoading && <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />}
       </header>
 
-      {errorStatus && (
+      {errorMessage && (
         <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex items-start gap-3 shrink-0">
           <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
           <div className="text-sm font-medium">
-            Erreur d'exécution de la requête : {errorStatus}
+            Erreur d'exécution de la requête : {errorMessage}
           </div>
         </div>
       )}
@@ -56,8 +56,8 @@ export default function AllOffersPage({ globalOffersState }) {
             offers={offers}
             isLoading={isLoading}
             limit={limit}
-            setLimit={setLimit}
-            refresh={refresh}
+            onChangeLimit={setLimit}
+            onRefresh={refresh}
             onSelectOffer={openOffer}
           />
         }

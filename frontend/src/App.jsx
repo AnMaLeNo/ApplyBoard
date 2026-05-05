@@ -26,7 +26,7 @@ export default function App() {
   });
   const { reset: resetGlobalOffers } = globalOffersState;
 
-  // Purge le registre local lorsque la session se ferme.
+  // Purge les registres locaux lorsque la session se ferme.
   useEffect(() => {
     if (auth.authState === 'out') {
       resetOffers();
@@ -43,16 +43,20 @@ export default function App() {
   }
 
   if (auth.authState === 'out') {
+    const handleSubmit = (credentials) =>
+      auth.authMode === 'login' ? auth.signIn(credentials) : auth.signUp(credentials);
+
+    const handleToggleAuthMode = () => {
+      auth.setAuthMode((mode) => (mode === 'login' ? 'register' : 'login'));
+      auth.setAuthError(null);
+    };
+
     return (
       <AuthScreen
         authMode={auth.authMode}
-        email={auth.email}
-        password={auth.password}
         authError={auth.authError}
-        setEmail={auth.setEmail}
-        setPassword={auth.setPassword}
-        toggleAuthMode={auth.toggleAuthMode}
-        onSubmit={auth.submitAuth}
+        onSubmit={handleSubmit}
+        onToggleAuthMode={handleToggleAuthMode}
       />
     );
   }
