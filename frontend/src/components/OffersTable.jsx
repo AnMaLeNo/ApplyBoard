@@ -1,5 +1,4 @@
-import { RefreshCw, Trash2 } from 'lucide-react';
-import StatusToggle from './StatusToggle.jsx';
+import { CheckCircle2, Circle, RefreshCw, Trash2 } from 'lucide-react';
 import OfferTitleCell from './OfferTitleCell.jsx';
 import { fallback, formatDate } from '../utils/format.js';
 
@@ -27,6 +26,12 @@ function FilterSelect({ value, onChangeValue, label }) {
   );
 }
 
+function StatusIcon({ active, label }) {
+  const Icon = active ? CheckCircle2 : Circle;
+  const color = active ? 'text-green-600' : 'text-slate-300';
+  return <Icon className={`w-5 h-5 ${color}`} aria-label={label} />;
+}
+
 export default function OffersTable({
   offers,
   isLoading,
@@ -37,7 +42,7 @@ export default function OffersTable({
   onChangeAnswerFilter,
   onChangeLimit,
   onRefresh,
-  onToggleStatus,
+  onSelectOffer,
   onDelete,
 }) {
   return (
@@ -80,8 +85,8 @@ export default function OffersTable({
               <th className="px-4 py-3 font-semibold">ID</th>
               <th className="px-4 py-3 font-semibold">Offre</th>
               <th className="px-4 py-3 font-semibold">Contrat / Campus</th>
-              <th className="px-4 py-3 font-semibold">État 'Apply'</th>
-              <th className="px-4 py-3 font-semibold">État 'Answer'</th>
+              <th className="px-4 py-3 font-semibold text-center">Apply</th>
+              <th className="px-4 py-3 font-semibold text-center">Answer</th>
               <th className="px-4 py-3 font-semibold">Date d'ajout</th>
               <th className="px-4 py-3 font-semibold text-center">Action</th>
             </tr>
@@ -97,7 +102,16 @@ export default function OffersTable({
               offers.map((offer) => (
                 <tr
                   key={offer.id}
-                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectOffer(offer)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectOffer(offer);
+                    }
+                  }}
+                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top cursor-pointer focus:outline-none focus:bg-slate-50"
                 >
                   <td className="px-4 py-3 font-mono font-medium text-slate-900">{offer.id}</td>
                   <OfferTitleCell offer={offer} maxWidthClass="max-w-[280px]" />
@@ -108,28 +122,25 @@ export default function OffersTable({
                       {offer.salary ? ` · ${offer.salary}` : ''}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <StatusToggle
-                      status={offer.apply}
-                      label={offer.apply ? 'Postulé' : 'En attente'}
-                      onClick={() => onToggleStatus(offer.id, 'apply', offer.apply)}
-                      disabled={isLoading}
-                    />
+                  <td className="px-4 py-3 text-center">
+                    <div className="inline-flex justify-center">
+                      <StatusIcon active={offer.apply} label={offer.apply ? 'Postulé' : 'En attente'} />
+                    </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <StatusToggle
-                      status={offer.answer}
-                      label={offer.answer ? 'Reçu' : 'Sans réponse'}
-                      onClick={() => onToggleStatus(offer.id, 'answer', offer.answer)}
-                      disabled={isLoading}
-                    />
+                  <td className="px-4 py-3 text-center">
+                    <div className="inline-flex justify-center">
+                      <StatusIcon active={offer.answer} label={offer.answer ? 'Reçu' : 'Sans réponse'} />
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                     {formatDate(offer.created_at)}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button
-                      onClick={() => onDelete(offer.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(offer.id);
+                      }}
                       disabled={isLoading}
                       className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Exécuter la suppression (DELETE)"

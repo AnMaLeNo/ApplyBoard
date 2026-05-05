@@ -15,7 +15,7 @@ function MetaItem({ Icon, label, children }) {
   );
 }
 
-export default function OfferDetailPanel({ offer, onBack }) {
+export default function OfferDetailPanel({ offer, onBack, actions }) {
   if (!offer) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center text-slate-400">
@@ -51,6 +51,8 @@ export default function OfferDetailPanel({ offer, onBack }) {
           <ExternalLink className="w-4 h-4" />
         </a>
       </div>
+
+      {actions}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <MetaItem Icon={Briefcase} label="Contrat">{fallback(offer.contract_type)}</MetaItem>

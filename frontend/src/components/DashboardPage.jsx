@@ -1,5 +1,8 @@
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 import OffersTable from './OffersTable.jsx';
+import OfferDetailPanel from './OfferDetailPanel.jsx';
+import MasterDetailLayout from './MasterDetailLayout.jsx';
+import StatusToggle from './StatusToggle.jsx';
 
 export default function DashboardPage({ offersState }) {
   const {
@@ -17,45 +20,75 @@ export default function DashboardPage({ offersState }) {
     deleteOffer,
   } = offersState;
 
-  const handleToggleStatus = (id, field, current) =>
-    updateOffer(id, { [field]: !current });
+  const [selectedOfferId, setSelectedOfferId] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
-  return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      <header className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Suivi des Candidatures
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Interface d'interaction avec le service d'agrégation d'offres 42.
-          </p>
-        </div>
-        {isLoading && <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />}
-      </header>
+  // Dérivé : permet à la vue détail de refléter automatiquement les mutations
+  // (toggle apply/answer) sans avoir à dupliquer l'offre dans un state local.
+  const selectedOffer = offers.find((offer) => offer.id === selectedOfferId) ?? null;
 
-      {errorMessage && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
-          <div className="text-sm font-medium">
-            Erreur d'exécution de la requête : {errorMessage}
-          </div>
-        </div>
-      )}
+  const handleSelectOffer = (offer) => {
+    setSelectedOfferId(offer.id);
+    setDetailOpen(true);
+  };
 
-      <OffersTable
-        offers={offers}
-        isLoading={isLoading}
-        filterApply={filterApply}
-        filterAnswer={filterAnswer}
-        limit={limit}
-        onChangeApplyFilter={setFilterApply}
-        onChangeAnswerFilter={setFilterAnswer}
-        onChangeLimit={setLimit}
-        onRefresh={refresh}
-        onToggleStatus={handleToggleStatus}
-        onDelete={deleteOffer}
+  const handleToggleStatus = (field, current) => {
+    if (selectedOfferId == null) return;
+    updateOffer(selectedOfferId, { [field]: !current });
+  };
+
+  const detailActions = selectedOffer && (
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="text-xs uppercase tracking-wide text-slate-400 font-semibold mr-2">
+        Statut
+      </span>
+      <StatusToggle
+        status={selectedOffer.apply}
+        label={selectedOffer.apply ? 'Postulé' : 'En attente'}
+        onClick={() => handleToggleStatus('apply', selectedOffer.apply)}
+        disabled={isLoading}
+      />
+      <StatusToggle
+        status={selectedOffer.answer}
+        label={selectedOffer.answer ? 'Reçu' : 'Sans réponse'}
+        onClick={() => handleToggleStatus('answer', selectedOffer.answer)}
+        disabled={isLoading}
       />
     </div>
+  );
+
+  return (
+    <MasterDetailLayout
+      title="Suivi des Candidatures"
+      subtitle="Interface d'interaction avec le service d'agrégation d'offres 42."
+      isLoading={isLoading}
+      errorMessage={errorMessage}
+      detailOpen={detailOpen}
+      onDetailOpenChange={setDetailOpen}
+      canOpenDetail={selectedOffer != null}
+      detailKey={selectedOfferId}
+      table={
+        <OffersTable
+          offers={offers}
+          isLoading={isLoading}
+          filterApply={filterApply}
+          filterAnswer={filterAnswer}
+          limit={limit}
+          onChangeApplyFilter={setFilterApply}
+          onChangeAnswerFilter={setFilterAnswer}
+          onChangeLimit={setLimit}
+          onRefresh={refresh}
+          onSelectOffer={handleSelectOffer}
+          onDelete={deleteOffer}
+        />
+      }
+      detail={
+        <OfferDetailPanel
+          offer={selectedOffer}
+          onBack={() => setDetailOpen(false)}
+          actions={detailActions}
+        />
+      }
+    />
   );
 }
