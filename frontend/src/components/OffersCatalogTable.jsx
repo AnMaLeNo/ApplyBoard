@@ -1,0 +1,115 @@
+import { Database, ExternalLink, RefreshCw } from 'lucide-react';
+import { fallback, formatDate } from '../utils/format.js';
+
+const LIMIT_OPTIONS = [25, 50, 100, 250, 500];
+
+export default function OffersCatalogTable({
+  offers,
+  isLoading,
+  limit,
+  setLimit,
+  refresh,
+  onSelectOffer,
+}) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+        <h2 className="text-lg font-semibold text-slate-800">
+          Catalogue ({offers.length})
+        </h2>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            className="text-sm border-slate-300 rounded-md focus:ring-blue-500 py-1.5"
+          >
+            {LIMIT_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                Limite : {value}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={refresh}
+            disabled={isLoading}
+            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left text-slate-600">
+          <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-y border-slate-200">
+            <tr>
+              <th className="px-4 py-3 font-semibold">ID</th>
+              <th className="px-4 py-3 font-semibold">Offre</th>
+              <th className="px-4 py-3 font-semibold">Contrat</th>
+              <th className="px-4 py-3 font-semibold">Campus</th>
+              <th className="px-4 py-3 font-semibold">Date d'ajout</th>
+            </tr>
+          </thead>
+          <tbody>
+            {offers.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="px-4 py-12 text-center text-slate-400">
+                  <Database className="w-8 h-8 mx-auto mb-3 text-slate-300" />
+                  Aucune offre référencée dans le catalogue.
+                </td>
+              </tr>
+            ) : (
+              offers.map((offer) => (
+                <tr
+                  key={offer.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectOffer(offer)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectOffer(offer);
+                    }
+                  }}
+                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top cursor-pointer focus:outline-none focus:bg-slate-50"
+                >
+                  <td className="px-4 py-3 font-mono font-medium text-slate-900">
+                    {offer.id}
+                  </td>
+                  <td className="px-4 py-3 max-w-[320px]">
+                    <a
+                      href={offer.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-start gap-1.5 text-blue-600 hover:text-blue-800 font-medium"
+                      title={offer.title || offer.url}
+                    >
+                      <span className="line-clamp-2">
+                        {fallback(offer.title) === '—' ? offer.url : offer.title}
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    </a>
+                    <div className="text-xs text-slate-500 mt-1">{fallback(offer.company)}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="text-slate-700">{fallback(offer.contract_type)}</div>
+                    {offer.salary && (
+                      <div className="text-xs text-slate-500 mt-1">{offer.salary}</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{fallback(offer.campus)}</td>
+                  <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                    {formatDate(offer.created_at)}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

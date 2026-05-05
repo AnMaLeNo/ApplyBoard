@@ -1,15 +1,5 @@
 import { ArrowLeft, ExternalLink, Mail, MapPin, Calendar, Briefcase, Building2, GraduationCap } from 'lucide-react';
-
-function fallback(value) {
-  return value && String(value).trim() ? value : '—';
-}
-
-function formatDate(value) {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-}
+import { fallback, formatDate } from '../utils/format.js';
 
 function MetaItem({ Icon, label, children }) {
   return (
