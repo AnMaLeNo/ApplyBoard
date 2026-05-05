@@ -148,6 +148,8 @@ export default function AllOffersPage({ globalOffersState }) {
   const [currentPanel, setCurrentPanel] = useState('list'); // 'list' | 'detail'
 
   const viewportRef = useRef(null);
+  const detailScrollRef = useRef(null);
+  const lastOpenedIdRef = useRef(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const x = useMotionValue(0);
   const animationRef = useRef(null);
@@ -260,6 +262,11 @@ export default function AllOffersPage({ globalOffersState }) {
   }, [currentPanel]);
 
   const openDetail = (offer) => {
+    // Reset du scroll uniquement si l'offre change.
+    if (lastOpenedIdRef.current !== offer.id && detailScrollRef.current) {
+      detailScrollRef.current.scrollTop = 0;
+    }
+    lastOpenedIdRef.current = offer.id;
     setSelectedOffer(offer);
     setCurrentPanel('detail');
   };
@@ -285,8 +292,8 @@ export default function AllOffersPage({ globalOffersState }) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      <header className="flex justify-between items-start">
+    <div className="max-w-6xl mx-auto flex flex-col h-[calc(100dvh-7rem)] space-y-6">
+      <header className="flex justify-between items-start shrink-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
             Registre Global des Offres
@@ -299,7 +306,7 @@ export default function AllOffersPage({ globalOffersState }) {
       </header>
 
       {errorStatus && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex items-start gap-3">
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex items-start gap-3 shrink-0">
           <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
           <div className="text-sm font-medium">
             Erreur d'exécution de la requête : {errorStatus}
@@ -307,9 +314,9 @@ export default function AllOffersPage({ globalOffersState }) {
         </div>
       )}
 
-      <div ref={viewportRef} className="overflow-hidden touch-pan-y">
+      <div ref={viewportRef} className="overflow-hidden touch-pan-y flex-1 min-h-0">
         <motion.div
-          className="flex"
+          className="flex h-full"
           style={{ width: '200%', x }}
           drag={selectedOffer ? 'x' : false}
           dragConstraints={{ left: -viewportWidth, right: 0 }}
@@ -318,7 +325,7 @@ export default function AllOffersPage({ globalOffersState }) {
           onDragStart={() => animationRef.current?.stop()}
           onDragEnd={handleDragEnd}
         >
-          <div className="w-1/2 shrink-0 pr-2">
+          <div className="w-1/2 shrink-0 pr-2 h-full overflow-y-auto">
             <CatalogTable
               offers={offers}
               isLoading={isLoading}
@@ -328,7 +335,7 @@ export default function AllOffersPage({ globalOffersState }) {
               onSelectOffer={openDetail}
             />
           </div>
-          <div className="w-1/2 shrink-0 pl-2">
+          <div ref={detailScrollRef} className="w-1/2 shrink-0 pl-2 h-full overflow-y-auto">
             <OfferDetailPanel offer={selectedOffer} onBack={closeDetail} />
           </div>
         </motion.div>
