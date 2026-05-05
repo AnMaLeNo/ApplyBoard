@@ -23,6 +23,10 @@ function FilterSelect({ value, onChange, label }) {
   );
 }
 
+function fallback(value) {
+  return value && String(value).trim() ? value : '—';
+}
+
 export default function OffersTable({
   offers,
   isLoading,
@@ -60,7 +64,8 @@ export default function OffersTable({
           <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-y border-slate-200">
             <tr>
               <th className="px-4 py-3 font-semibold">ID</th>
-              <th className="px-4 py-3 font-semibold">URI d'accès</th>
+              <th className="px-4 py-3 font-semibold">Offre</th>
+              <th className="px-4 py-3 font-semibold">Contrat / Campus</th>
               <th className="px-4 py-3 font-semibold">État 'Apply'</th>
               <th className="px-4 py-3 font-semibold">État 'Answer'</th>
               <th className="px-4 py-3 font-semibold text-center">Action</th>
@@ -69,7 +74,7 @@ export default function OffersTable({
           <tbody>
             {offers.length === 0 ? (
               <tr>
-                <td colSpan="5" className="px-4 py-8 text-center text-slate-400">
+                <td colSpan="6" className="px-4 py-8 text-center text-slate-400">
                   Aucun enregistrement ne correspond aux critères.
                 </td>
               </tr>
@@ -77,19 +82,28 @@ export default function OffersTable({
               offers.map((offer) => (
                 <tr
                   key={offer.id}
-                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top"
                 >
                   <td className="px-4 py-3 font-mono font-medium text-slate-900">{offer.id}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 max-w-[280px]">
                     <a
                       href={offer.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 max-w-[150px] truncate"
+                      className="inline-flex items-start gap-1.5 text-blue-600 hover:text-blue-800 font-medium"
+                      title={offer.title || offer.url}
                     >
-                      <span className="truncate">{offer.url}</span>
-                      <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                      <span className="line-clamp-2">{fallback(offer.title) === '—' ? offer.url : offer.title}</span>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                     </a>
+                    <div className="text-xs text-slate-500 mt-1">{fallback(offer.company)}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="text-slate-700">{fallback(offer.contract_type)}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {fallback(offer.campus)}
+                      {offer.salary ? ` · ${offer.salary}` : ''}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <StatusToggle
