@@ -20,6 +20,32 @@ const offerFieldsProperties = offerFields.reduce((acc, key) => {
   return acc;
 }, {});
 
+// Schéma partagé du payload "offre" sérialisé en réponse (liste + détail).
+// `apply`/`answer` ne sont peuplés que sur les endpoints joints à `user_offers` ;
+// fast-json-stringify les omettra automatiquement sur les réponses du catalogue global.
+const offerResponseSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'integer' },
+    url: { type: 'string' },
+    created_at: { type: 'string', format: 'date-time' },
+    apply: { type: 'boolean' },
+    answer: { type: 'boolean' },
+    ...offerFieldsProperties,
+  },
+};
+
+const paginationQueryProperty = {
+  type: 'integer',
+  minimum: 1,
+  maximum: 500,
+};
+
+const filterQueryProperties = {
+  apply: { type: 'boolean' },
+  answer: { type: 'boolean' },
+};
+
 async function offerRoutes(fastify, opts) {
   const offerRouteOptions = {
     onRequest: [fastify.authenticate],
@@ -53,24 +79,12 @@ async function offerRoutes(fastify, opts) {
       querystring: {
         type: 'object',
         properties: {
-          apply: { type: 'boolean' },
-          answer: { type: 'boolean' }
+          ...filterQueryProperties,
+          limit: { ...paginationQueryProperty, default: 500 }
         }
       },
       response: {
-        200: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'integer' },
-              url: { type: 'string' },
-              apply: { type: 'boolean' },
-              answer: { type: 'boolean' },
-              ...offerFieldsProperties
-            }
-          }
-        }
+        200: { type: 'array', items: offerResponseSchema }
       }
     }
   };
@@ -109,16 +123,7 @@ async function offerRoutes(fastify, opts) {
         }
       },
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            id: { type: 'integer' },
-            url: { type: 'string' },
-            apply: { type: 'boolean' },
-            answer: { type: 'boolean' },
-            ...offerFieldsProperties
-          }
-        },
+        200: offerResponseSchema,
         404: {
           type: 'object',
           properties: {
@@ -163,27 +168,11 @@ async function offerRoutes(fastify, opts) {
       querystring: {
         type: 'object',
         properties: {
-          limit: {
-            type: 'integer',
-            minimum: 1,
-            maximum: 500,
-            default: 50
-          }
+          limit: { ...paginationQueryProperty, default: 50 }
         }
       },
       response: {
-        200: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'integer' },
-              url: { type: 'string' },
-              created_at: { type: 'string', format: 'date-time' },
-              ...offerFieldsProperties
-            }
-          }
-        }
+        200: { type: 'array', items: offerResponseSchema }
       }
     }
   };
@@ -229,10 +218,10 @@ async function offerRoutes(fastify, opts) {
     }
   });
 
-  const offerColumnsSelect = ['o.id', 'o.url', ...offerFields.map(f => `o.${f}`)].join(', ');
+  const offerColumnsSelect = ['o.id', 'o.url', 'o.created_at', ...offerFields.map(f => `o.${f}`)].join(', ');
 
   fastify.get('/api/offers', getOffersRouteOptions, async (request, reply) => {
-    const { apply, answer } = request.query;
+    const { apply, answer, limit } = request.query;
 
     let sql = `
       SELECT ${offerColumnsSelect}, uo.apply, uo.answer
@@ -251,6 +240,9 @@ async function offerRoutes(fastify, opts) {
       sql += ` AND uo.answer = $${paramIndex++}`;
       values.push(answer);
     }
+
+    sql += ` ORDER BY o.created_at DESC LIMIT $${paramIndex++}`;
+    values.push(limit);
 
     const res = await pool.query(sql, values);
     return reply.code(200).send(res.rows);
@@ -324,7 +316,7 @@ async function offerRoutes(fastify, opts) {
 
     try {
       const res = await pool.query(
-        `SELECT id, url, created_at, ${offerFields.join(', ')} FROM offers ORDER BY created_at DESC LIMIT $1`,
+        `SELECT ${offerColumnsSelect} FROM offers o ORDER BY o.created_at DESC LIMIT $1`,
         [limit]
       );
 
