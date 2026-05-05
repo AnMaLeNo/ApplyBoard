@@ -11,6 +11,7 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
   const [errorMessage, setErrorMessage] = useState(null);
   const [filterApply, setFilterApply] = useState('all');
   const [filterAnswer, setFilterAnswer] = useState('all');
+  const [limit, setLimit] = useState(500);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -19,6 +20,7 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
       const data = await offersApi.listOffers({
         apply: filterApply,
         answer: filterAnswer,
+        limit,
       });
       setOffers(data ?? []);
       onAuthenticated?.();
@@ -31,7 +33,7 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
     } finally {
       setIsLoading(false);
     }
-  }, [filterApply, filterAnswer, onAuthenticated, onUnauthorized]);
+  }, [filterApply, filterAnswer, limit, onAuthenticated, onUnauthorized]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -78,8 +80,10 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
     errorMessage,
     filterApply,
     filterAnswer,
+    limit,
     setFilterApply,
     setFilterAnswer,
+    setLimit,
     refresh,
     updateOffer,
     deleteOffer,

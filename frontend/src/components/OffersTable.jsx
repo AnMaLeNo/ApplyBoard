@@ -1,12 +1,14 @@
 import { ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
 import StatusToggle from './StatusToggle.jsx';
-import { fallback } from '../utils/format.js';
+import { fallback, formatDate } from '../utils/format.js';
 
 const FILTER_OPTIONS = [
   { value: 'all', labelPrefix: 'All' },
   { value: 'true', labelPrefix: 'True (1)' },
   { value: 'false', labelPrefix: 'False (0)' },
 ];
+
+const LIMIT_OPTIONS = [50, 100, 250, 500];
 
 function FilterSelect({ value, onChangeValue, label }) {
   return (
@@ -29,8 +31,10 @@ export default function OffersTable({
   isLoading,
   filterApply,
   filterAnswer,
+  limit,
   onChangeApplyFilter,
   onChangeAnswerFilter,
+  onChangeLimit,
   onRefresh,
   onToggleStatus,
   onDelete,
@@ -45,6 +49,18 @@ export default function OffersTable({
         <div className="flex flex-wrap items-center gap-3">
           <FilterSelect value={filterApply} onChangeValue={onChangeApplyFilter} label="Apply" />
           <FilterSelect value={filterAnswer} onChangeValue={onChangeAnswerFilter} label="Answer" />
+
+          <select
+            value={limit}
+            onChange={(e) => onChangeLimit(Number(e.target.value))}
+            className="text-sm border-slate-300 rounded-md focus:ring-blue-500 py-1.5"
+          >
+            {LIMIT_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                Limite : {value}
+              </option>
+            ))}
+          </select>
 
           <button
             onClick={onRefresh}
@@ -65,13 +81,14 @@ export default function OffersTable({
               <th className="px-4 py-3 font-semibold">Contrat / Campus</th>
               <th className="px-4 py-3 font-semibold">État 'Apply'</th>
               <th className="px-4 py-3 font-semibold">État 'Answer'</th>
+              <th className="px-4 py-3 font-semibold">Date d'ajout</th>
               <th className="px-4 py-3 font-semibold text-center">Action</th>
             </tr>
           </thead>
           <tbody>
             {offers.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-4 py-8 text-center text-slate-400">
+                <td colSpan="7" className="px-4 py-8 text-center text-slate-400">
                   Aucun enregistrement ne correspond aux critères.
                 </td>
               </tr>
@@ -117,6 +134,9 @@ export default function OffersTable({
                       onClick={() => onToggleStatus(offer.id, 'answer', offer.answer)}
                       disabled={isLoading}
                     />
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                    {formatDate(offer.created_at)}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button

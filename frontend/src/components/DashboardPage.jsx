@@ -8,8 +8,10 @@ export default function DashboardPage({ offersState }) {
     errorMessage,
     filterApply,
     filterAnswer,
+    limit,
     setFilterApply,
     setFilterAnswer,
+    setLimit,
     refresh,
     updateOffer,
     deleteOffer,
@@ -46,8 +48,10 @@ export default function DashboardPage({ offersState }) {
         isLoading={isLoading}
         filterApply={filterApply}
         filterAnswer={filterAnswer}
+        limit={limit}
         onChangeApplyFilter={setFilterApply}
         onChangeAnswerFilter={setFilterAnswer}
+        onChangeLimit={setLimit}
         onRefresh={refresh}
         onToggleStatus={handleToggleStatus}
         onDelete={deleteOffer}
