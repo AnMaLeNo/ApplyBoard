@@ -1,5 +1,4 @@
 import { AlertCircle, Loader2 } from 'lucide-react';
-import OfferForm from './OfferForm.jsx';
 import OffersTable from './OffersTable.jsx';
 
 export default function DashboardPage({ offersState }) {
@@ -9,12 +8,9 @@ export default function DashboardPage({ offersState }) {
     errorStatus,
     filterApply,
     filterAnswer,
-    urlInput,
     setFilterApply,
     setFilterAnswer,
-    setUrlInput,
     refresh,
-    submitOffer,
     toggleStatus,
     deleteOffer,
   } = offersState;
@@ -42,30 +38,17 @@ export default function DashboardPage({ offersState }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1">
-          <OfferForm
-            urlInput={urlInput}
-            setUrlInput={setUrlInput}
-            onSubmit={submitOffer}
-            isLoading={isLoading}
-          />
-        </div>
-
-        <div className="md:col-span-2 space-y-4">
-          <OffersTable
-            offers={offers}
-            isLoading={isLoading}
-            filterApply={filterApply}
-            filterAnswer={filterAnswer}
-            setFilterApply={setFilterApply}
-            setFilterAnswer={setFilterAnswer}
-            onRefresh={refresh}
-            onToggleStatus={toggleStatus}
-            onDelete={deleteOffer}
-          />
-        </div>
-      </div>
+      <OffersTable
+        offers={offers}
+        isLoading={isLoading}
+        filterApply={filterApply}
+        filterAnswer={filterAnswer}
+        setFilterApply={setFilterApply}
+        setFilterAnswer={setFilterAnswer}
+        onRefresh={refresh}
+        onToggleStatus={toggleStatus}
+        onDelete={deleteOffer}
+      />
     </div>
   );
 }

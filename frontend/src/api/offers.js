@@ -14,9 +14,6 @@ export const listGlobalOffers = ({ limit } = {}) =>
     params: limit ? { limit } : undefined,
   });
 
-export const createOffer = (url) =>
-  apiFetch('/offers', { method: 'POST', body: { url } });
-
 export const updateOffer = (id, patch) =>
   apiFetch(`/offers/${id}`, { method: 'PATCH', body: patch });
 

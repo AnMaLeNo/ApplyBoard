@@ -11,7 +11,6 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
   const [errorStatus, setErrorStatus] = useState(null);
   const [filterApply, setFilterApply] = useState('all');
   const [filterAnswer, setFilterAnswer] = useState('all');
-  const [urlInput, setUrlInput] = useState('');
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -59,16 +58,6 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
     }
   };
 
-  const submitOffer = async (e) => {
-    e.preventDefault();
-    const url = urlInput.trim();
-    if (!url) return;
-    await runMutation(async () => {
-      await offersApi.createOffer(url);
-      setUrlInput('');
-    }, "Échec de l'insertion");
-  };
-
   const toggleStatus = (id, field, currentValue) =>
     runMutation(
       () => offersApi.updateOffer(id, { [field]: !currentValue }),
@@ -84,7 +73,6 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
   const reset = useCallback(() => {
     setOffers([]);
     setErrorStatus(null);
-    setUrlInput('');
   }, []);
 
   return {
@@ -93,12 +81,9 @@ export function useOffers({ enabled, onUnauthorized, onAuthenticated }) {
     errorStatus,
     filterApply,
     filterAnswer,
-    urlInput,
     setFilterApply,
     setFilterAnswer,
-    setUrlInput,
     refresh,
-    submitOffer,
     toggleStatus,
     deleteOffer,
     reset,
