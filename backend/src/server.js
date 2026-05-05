@@ -5,6 +5,7 @@ import { initDB } from './db/init.js';
 import authPlugin from './plugins/authenticate.js';
 import authRoutes from './routes/auth.js';
 import offerRoutes from './routes/offers.js';
+import cvModuleRoutes from './routes/cvModules.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -23,6 +24,7 @@ const startServer = async () => {
 
     await fastify.register(authRoutes);
     await fastify.register(offerRoutes);
+    await fastify.register(cvModuleRoutes);
 
     await fastify.listen({ port: 3000, host: '0.0.0.0' });
   } catch (err) {
