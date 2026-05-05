@@ -1,5 +1,25 @@
 import { pool } from '../db/init.js';
 
+const offerFields = [
+  'title',
+  'company',
+  'short_description',
+  'full_description',
+  'salary',
+  'contract_type',
+  'email',
+  'address',
+  'availability',
+  'campus',
+  'expertises',
+  'target'
+];
+
+const offerFieldsProperties = offerFields.reduce((acc, key) => {
+  acc[key] = { type: ['string', 'null'] };
+  return acc;
+}, {});
+
 async function offerRoutes(fastify, opts) {
   const offerRouteOptions = {
     onRequest: [fastify.authenticate],
@@ -11,7 +31,8 @@ async function offerRoutes(fastify, opts) {
           url: {
             type: 'string',
             pattern: '^https:\\/\\/companies\\.intra\\.42\\.fr\\/en\\/offers\\/\\d+$'
-          }
+          },
+          ...offerFieldsProperties
         }
       },
       response: {
@@ -45,7 +66,8 @@ async function offerRoutes(fastify, opts) {
               id: { type: 'integer' },
               url: { type: 'string' },
               apply: { type: 'boolean' },
-              answer: { type: 'boolean' }
+              answer: { type: 'boolean' },
+              ...offerFieldsProperties
             }
           }
         }
@@ -93,7 +115,8 @@ async function offerRoutes(fastify, opts) {
             id: { type: 'integer' },
             url: { type: 'string' },
             apply: { type: 'boolean' },
-            answer: { type: 'boolean' }
+            answer: { type: 'boolean' },
+            ...offerFieldsProperties
           }
         },
         404: {
@@ -140,11 +163,11 @@ async function offerRoutes(fastify, opts) {
       querystring: {
         type: 'object',
         properties: {
-          limit: { 
-            type: 'integer', 
-            minimum: 1, 
+          limit: {
+            type: 'integer',
+            minimum: 1,
             maximum: 500,
-            default: 50 
+            default: 50
           }
         }
       },
@@ -156,7 +179,8 @@ async function offerRoutes(fastify, opts) {
             properties: {
               id: { type: 'integer' },
               url: { type: 'string' },
-              created_at: { type: 'string', format: 'date-time' } 
+              created_at: { type: 'string', format: 'date-time' },
+              ...offerFieldsProperties
             }
           }
         }
@@ -165,119 +189,134 @@ async function offerRoutes(fastify, opts) {
   };
 
   fastify.post('/api/offers', offerRouteOptions, async (request, reply) => {
-  const { url } = request.body;
-  const match = url.match(/\/(\d+)$/);
+    const { url } = request.body;
+    const match = url.match(/\/(\d+)$/);
 
-  if (!match) {
+    if (!match) {
       return reply.code(400).send({ error: 'Extraction de l\'ID impossible.' });
-  }
+    }
 
-  const extractedId = parseInt(match[1], 10);
-  const userId = request.user.id;
+    const extractedId = parseInt(match[1], 10);
+    const userId = request.user.id;
 
-  try {
+    const columns = ['id', 'url'];
+    const placeholders = ['$1', '$2'];
+    const values = [extractedId, url];
+    let paramIndex = 3;
+
+    for (const field of offerFields) {
+      if (request.body[field] !== undefined) {
+        columns.push(field);
+        placeholders.push(`$${paramIndex++}`);
+        values.push(request.body[field]);
+      }
+    }
+
+    try {
       await pool.query(
-      'INSERT INTO offers (id, url) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING',
-      [extractedId, url]
+        `INSERT INTO offers (${columns.join(', ')}) VALUES (${placeholders.join(', ')}) ON CONFLICT (id) DO NOTHING`,
+        values
       );
       await pool.query(
-      'INSERT INTO user_offers (user_id, offer_id, apply, answer) VALUES ($1, $2, false, false)',
-      [userId, extractedId]
+        'INSERT INTO user_offers (user_id, offer_id, apply, answer) VALUES ($1, $2, false, false)',
+        [userId, extractedId]
       );
       return reply.code(201).send({ id: extractedId, status: 'created' });
-  } catch (error) {
+    } catch (error) {
       if (error.code === '23505') return reply.code(409).send({ error: 'Association déjà existante pour cet utilisateur.' });
       fastify.log.error(error);
       return reply.code(500).send({ error: 'Erreur DML d\'insertion.' });
-  }
+    }
   });
 
-  fastify.get('/api/offers', getOffersRouteOptions, async (request, reply) => {
-  const { apply, answer } = request.query;
+  const offerColumnsSelect = ['o.id', 'o.url', ...offerFields.map(f => `o.${f}`)].join(', ');
 
-  let sql = `
-      SELECT o.id, o.url, uo.apply, uo.answer
+  fastify.get('/api/offers', getOffersRouteOptions, async (request, reply) => {
+    const { apply, answer } = request.query;
+
+    let sql = `
+      SELECT ${offerColumnsSelect}, uo.apply, uo.answer
       FROM offers o
       JOIN user_offers uo ON o.id = uo.offer_id
       WHERE uo.user_id = $1
-  `;
-  const values = [request.user.id];
-  let paramIndex = 2;
+    `;
+    const values = [request.user.id];
+    let paramIndex = 2;
 
-  if (apply !== undefined) {
+    if (apply !== undefined) {
       sql += ` AND uo.apply = $${paramIndex++}`;
       values.push(apply);
-  }
-  if (answer !== undefined) {
+    }
+    if (answer !== undefined) {
       sql += ` AND uo.answer = $${paramIndex++}`;
       values.push(answer);
-  }
+    }
 
-  const res = await pool.query(sql, values);
-  return reply.code(200).send(res.rows);
+    const res = await pool.query(sql, values);
+    return reply.code(200).send(res.rows);
   });
 
   fastify.patch('/api/offers/:id', patchOfferRouteOptions, async (request, reply) => {
-  const { apply, answer } = request.body;
+    const { apply, answer } = request.body;
 
-  const updates = [];
-  const values = [request.params.id, request.user.id];
-  let paramIndex = 3;
+    const updates = [];
+    const values = [request.params.id, request.user.id];
+    let paramIndex = 3;
 
-  if (apply !== undefined) {
+    if (apply !== undefined) {
       updates.push(`apply = $${paramIndex++}`);
       values.push(apply);
-  }
-  if (answer !== undefined) {
+    }
+    if (answer !== undefined) {
       updates.push(`answer = $${paramIndex++}`);
       values.push(answer);
-  }
+    }
 
-  const sql = `UPDATE user_offers SET ${updates.join(', ')} WHERE offer_id = $1 AND user_id = $2`;
-  const res = await pool.query(sql, values);
+    const sql = `UPDATE user_offers SET ${updates.join(', ')} WHERE offer_id = $1 AND user_id = $2`;
+    const res = await pool.query(sql, values);
 
-  if (res.rowCount === 0) return reply.code(404).send({ error: 'Association non résolue.' });
-  return reply.code(200).send({ id: request.params.id, status: 'updated' });
+    if (res.rowCount === 0) return reply.code(404).send({ error: 'Association non résolue.' });
+    return reply.code(200).send({ id: request.params.id, status: 'updated' });
   });
 
   fastify.get('/api/offers/:id', getSingleOfferRouteOptions, async (request, reply) => {
-  const { id } = request.params;
+    const { id } = request.params;
 
-  try {
+    try {
       const res = await pool.query(
-      `SELECT o.id, o.url, uo.apply, uo.answer
-      FROM offers o
-      JOIN user_offers uo ON o.id = uo.offer_id
-      WHERE o.id = $1 AND uo.user_id = $2`,
-      [id, request.user.id]
+        `SELECT ${offerColumnsSelect}, uo.apply, uo.answer
+        FROM offers o
+        JOIN user_offers uo ON o.id = uo.offer_id
+        WHERE o.id = $1 AND uo.user_id = $2`,
+        [id, request.user.id]
       );
 
       if (res.rows.length === 0) {
-      return reply.code(404).send({ error: 'Offre introuvable.' });
+        return reply.code(404).send({ error: 'Offre introuvable.' });
       }
 
       return reply.code(200).send(res.rows[0]);
-  } catch (error) {
+    } catch (error) {
       fastify.log.error(error);
       return reply.code(500).send({ error: 'Exception lors de l\'opération de lecture SQL.' });
-  }
+    }
   });
 
   fastify.delete('/api/offers/:id', deleteOfferRouteOptions, async (request, reply) => {
-  const { id } = request.params;
+    const { id } = request.params;
 
-  try {
+    try {
       const res = await pool.query(
-      'DELETE FROM user_offers WHERE offer_id = $1 AND user_id = $2',
-      [id, request.user.id]
+        'DELETE FROM user_offers WHERE offer_id = $1 AND user_id = $2',
+        [id, request.user.id]
       );
 
       if (res.rowCount === 0) return reply.code(404).send({ error: 'Association non résolue.' });
       return reply.code(200).send({ id: id, status: 'deleted' });
-  } catch (error) {
+    } catch (error) {
       fastify.log.error(error);
       return reply.code(500).send({ error: 'Exception lors de l\'exécution de l\'instruction DML.' });
-  }
+    }
   });
 
   fastify.get('/api/global-offers', getGlobalOffersRouteOptions, async (request, reply) => {
@@ -285,10 +324,10 @@ async function offerRoutes(fastify, opts) {
 
     try {
       const res = await pool.query(
-        'SELECT id, url, created_at FROM offers ORDER BY created_at DESC LIMIT $1',
+        `SELECT id, url, created_at, ${offerFields.join(', ')} FROM offers ORDER BY created_at DESC LIMIT $1`,
         [limit]
       );
-      
+
       return reply.code(200).send(res.rows);
     } catch (error) {
       fastify.log.error(error);
