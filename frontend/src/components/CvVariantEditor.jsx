@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, X, Check } from 'lucide-react';
-import { KIND_EDITORS, emptyContentForKind, emptyItemForKind } from '../utils/cvModuleKinds.js';
+import { X, Check } from 'lucide-react';
+import { KIND_EDITORS, emptyContentForKind } from '../utils/cvModuleKinds.js';
 
 function TextField({ field, value, onChange }) {
   const Tag = field.multiline ? 'textarea' : 'input';
@@ -134,20 +134,6 @@ export default function CvVariantEditor({
 
   const updateItems = (items) => setContent({ items });
 
-  const addItem = () => {
-    updateItems([...(content.items ?? []), emptyItemForKind(kind)]);
-  };
-
-  const updateItemAt = (index, next) => {
-    const items = [...(content.items ?? [])];
-    items[index] = next;
-    updateItems(items);
-  };
-
-  const removeItemAt = (index) => {
-    updateItems((content.items ?? []).filter((_, i) => i !== index));
-  };
-
   const canSubmit = label.trim().length > 0 && !busy;
 
   const handleSubmit = (event) => {
@@ -194,50 +180,12 @@ export default function CvVariantEditor({
         />
       )}
 
-      {editor.mode === 'list' && (
-        <div className="space-y-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Éléments
-          </div>
-          {(content.items ?? []).length === 0 && (
-            <div className="text-sm text-slate-400 italic">
-              Aucun élément. Cliquez sur « Ajouter ».
-            </div>
-          )}
-          {(content.items ?? []).map((item, index) => (
-            <div
-              key={index}
-              className="border border-slate-200 rounded-lg p-3 bg-slate-50/60 space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">
-                  #{index + 1}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => removeItemAt(index)}
-                  className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
-                  aria-label="Supprimer cet élément"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-              <ListItemFields
-                kind={kind}
-                item={item}
-                onChange={(next) => updateItemAt(index, next)}
-              />
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addItem}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded-md transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Ajouter un élément
-          </button>
-        </div>
+      {editor.mode === 'fields' && (
+        <ListItemFields
+          kind={kind}
+          item={content}
+          onChange={(next) => setContent(next)}
+        />
       )}
 
       <div className="flex items-center justify-end gap-2 pt-2">

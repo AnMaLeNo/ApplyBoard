@@ -33,26 +33,40 @@ function VariantPreview({ kind, content }) {
     );
   }
 
-  // mode list
-  const items = content.items ?? [];
-  if (items.length === 0) return <span className="text-slate-400 italic">Aucun élément</span>;
+  // mode fields : le content est l'entité unique elle-même
+  const primaryField = editor.fields[0];
+  const secondaryField = editor.fields[1];
+  const primary = content[primaryField.key];
+  const secondary = secondaryField ? content[secondaryField.key] : null;
+  const bullets = content.bullets;
+  const tags = content.tech ?? content.items;
+
   return (
-    <ul className="space-y-2">
-      {items.map((item, i) => {
-        const primaryField = editor.fields[0];
-        const secondaryField = editor.fields[1];
-        return (
-          <li key={i} className="text-sm">
-            <span className="font-medium text-slate-800">
-              {item[primaryField.key] || '(sans titre)'}
+    <div className="text-sm space-y-1.5">
+      <div>
+        <span className="font-medium text-slate-800">{primary || '(sans titre)'}</span>
+        {secondary && <span className="text-slate-500"> · {secondary}</span>}
+      </div>
+      {tags && tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {tags.map((t, i) => (
+            <span key={i} className="bg-slate-100 text-slate-600 text-xs px-1.5 py-0.5 rounded">
+              {t}
             </span>
-            {secondaryField && item[secondaryField.key] && (
-              <span className="text-slate-500"> · {item[secondaryField.key]}</span>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+          ))}
+        </div>
+      )}
+      {bullets && bullets.length > 0 && (
+        <ul className="space-y-0.5 text-slate-600">
+          {bullets.slice(0, 2).map((b, i) => (
+            <li key={i} className="text-xs before:content-['—'] before:mr-1.5">{b}</li>
+          ))}
+          {bullets.length > 2 && (
+            <li className="text-xs text-slate-400">+{bullets.length - 2} de plus</li>
+          )}
+        </ul>
+      )}
+    </div>
   );
 }
 

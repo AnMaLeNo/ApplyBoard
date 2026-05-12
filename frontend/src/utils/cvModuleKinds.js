@@ -23,9 +23,11 @@ export const KIND_LABELS = {
 };
 
 // Modes d'édition de la variante.
-//   text     → un champ texte unique stocké sous { text }
-//   tags     → liste de tags stockée sous { items: string[] }
-//   list     → liste éditable d'items stockée sous { items: [...] }
+//   text   → un champ texte unique stocké sous { text }
+//   tags   → liste de tags stockée sous { items: string[] }
+//   fields → une entrée unique (le module = l'entité, la variante = une présentation de cette entité)
+//            Kinds concernés : education, projects, hackathons, experience.
+//            Le générateur de CV sélectionne N modules de ce type et une variante par module.
 export const KIND_EDITORS = {
   title: { mode: 'text' },
   headline: { mode: 'text' },
@@ -33,7 +35,7 @@ export const KIND_EDITORS = {
   interests: { mode: 'tags' },
   skills: { mode: 'tags' },
   education: {
-    mode: 'list',
+    mode: 'fields',
     fields: [
       { key: 'degree', label: 'Diplôme', required: true },
       { key: 'school', label: 'Établissement', required: true },
@@ -42,7 +44,7 @@ export const KIND_EDITORS = {
     ],
   },
   projects: {
-    mode: 'list',
+    mode: 'fields',
     fields: [
       { key: 'name', label: 'Nom', required: true },
       { key: 'description', label: 'Description', multiline: true },
@@ -51,7 +53,7 @@ export const KIND_EDITORS = {
     ],
   },
   hackathons: {
-    mode: 'list',
+    mode: 'fields',
     fields: [
       { key: 'name', label: 'Nom', required: true },
       { key: 'year', label: 'Année' },
@@ -60,7 +62,7 @@ export const KIND_EDITORS = {
     ],
   },
   experience: {
-    mode: 'list',
+    mode: 'fields',
     fields: [
       { key: 'role', label: 'Poste', required: true },
       { key: 'company', label: 'Entreprise', required: true },
@@ -76,12 +78,8 @@ export function emptyContentForKind(kind) {
   const editor = KIND_EDITORS[kind];
   if (!editor) return {};
   if (editor.mode === 'text') return { text: '' };
-  return { items: [] };
-}
-
-export function emptyItemForKind(kind) {
-  const editor = KIND_EDITORS[kind];
-  if (!editor || editor.mode !== 'list') return null;
+  if (editor.mode === 'tags') return { items: [] };
+  // fields : le contenu est l'entité elle-même, pas une liste
   return editor.fields.reduce((acc, field) => {
     acc[field.key] = field.tags ? [] : '';
     return acc;
