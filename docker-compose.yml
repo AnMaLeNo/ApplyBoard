@@ -67,13 +67,17 @@ services:
         condition: service_healthy
     networks:
       - app-net
+    profiles:
+      - db-tools
 
   langflow:
-      image: langflowai/langflow:latest
-      ports:
-        - "7860:7860"
-      networks:
-        - app-net
+    image: langflowai/langflow:latest
+    ports:
+      - "7860:7860"
+    networks:
+      - app-net
+    profiles:
+      - ai-tools
 
 networks:
   app-net:
