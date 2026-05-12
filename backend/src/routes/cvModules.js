@@ -16,17 +16,6 @@ const isString = (v) => typeof v === 'string';
 const isOptionalString = (v) => v == null || typeof v === 'string';
 const isStringArray = (v) => Array.isArray(v) && v.every(isString);
 
-function validateItems(content, perItem) {
-  if (!content || typeof content !== 'object' || Array.isArray(content)) return 'content doit être un objet.';
-  const { items } = content;
-  if (!Array.isArray(items)) return 'content.items doit être un tableau.';
-  for (let i = 0; i < items.length; i++) {
-    const err = perItem(items[i]);
-    if (err) return `items[${i}] : ${err}`;
-  }
-  return null;
-}
-
 const contentValidatorsByKind = {
   title: (content) => {
     if (!content || typeof content.text !== 'string') return 'content.text (string) requis.';
@@ -48,44 +37,42 @@ const contentValidatorsByKind = {
     if (!content || !isStringArray(content.items)) return 'content.items (string[]) requis.';
     return null;
   },
-  education: (content) =>
-    validateItems(content, (it) => {
-      if (!it || typeof it !== 'object') return 'item invalide.';
-      if (!isString(it.degree)) return 'degree (string) requis.';
-      if (!isString(it.school)) return 'school (string) requis.';
-      if (!isOptionalString(it.year)) return 'year doit être string.';
-      if (!isOptionalString(it.description)) return 'description doit être string.';
-      return null;
-    }),
-  projects: (content) =>
-    validateItems(content, (it) => {
-      if (!it || typeof it !== 'object') return 'item invalide.';
-      if (!isString(it.name)) return 'name (string) requis.';
-      if (!isOptionalString(it.description)) return 'description doit être string.';
-      if (!isOptionalString(it.link)) return 'link doit être string.';
-      if (it.tech != null && !isStringArray(it.tech)) return 'tech doit être string[].';
-      return null;
-    }),
-  hackathons: (content) =>
-    validateItems(content, (it) => {
-      if (!it || typeof it !== 'object') return 'item invalide.';
-      if (!isString(it.name)) return 'name (string) requis.';
-      if (!isOptionalString(it.year)) return 'year doit être string.';
-      if (!isOptionalString(it.description)) return 'description doit être string.';
-      if (!isOptionalString(it.prize)) return 'prize doit être string.';
-      return null;
-    }),
-  experience: (content) =>
-    validateItems(content, (it) => {
-      if (!it || typeof it !== 'object') return 'item invalide.';
-      if (!isString(it.role)) return 'role (string) requis.';
-      if (!isString(it.company)) return 'company (string) requis.';
-      if (!isOptionalString(it.start)) return 'start doit être string.';
-      if (!isOptionalString(it.end)) return 'end doit être string.';
-      if (!isOptionalString(it.location)) return 'location doit être string.';
-      if (it.bullets != null && !isStringArray(it.bullets)) return 'bullets doit être string[].';
-      return null;
-    }),
+  // Kinds "composables" : une variante = une entrée unique (pas un tableau d'entrées).
+  // Le générateur de CV sélectionne N variantes de N modules distincts pour composer la section.
+  education: (content) => {
+    if (!content || typeof content !== 'object' || Array.isArray(content)) return 'content doit être un objet.';
+    if (!isString(content.degree)) return 'degree (string) requis.';
+    if (!isString(content.school)) return 'school (string) requis.';
+    if (!isOptionalString(content.year)) return 'year doit être string.';
+    if (!isOptionalString(content.description)) return 'description doit être string.';
+    return null;
+  },
+  projects: (content) => {
+    if (!content || typeof content !== 'object' || Array.isArray(content)) return 'content doit être un objet.';
+    if (!isString(content.name)) return 'name (string) requis.';
+    if (!isOptionalString(content.description)) return 'description doit être string.';
+    if (!isOptionalString(content.link)) return 'link doit être string.';
+    if (content.tech != null && !isStringArray(content.tech)) return 'tech doit être string[].';
+    return null;
+  },
+  hackathons: (content) => {
+    if (!content || typeof content !== 'object' || Array.isArray(content)) return 'content doit être un objet.';
+    if (!isString(content.name)) return 'name (string) requis.';
+    if (!isOptionalString(content.year)) return 'year doit être string.';
+    if (!isOptionalString(content.description)) return 'description doit être string.';
+    if (!isOptionalString(content.prize)) return 'prize doit être string.';
+    return null;
+  },
+  experience: (content) => {
+    if (!content || typeof content !== 'object' || Array.isArray(content)) return 'content doit être un objet.';
+    if (!isString(content.role)) return 'role (string) requis.';
+    if (!isString(content.company)) return 'company (string) requis.';
+    if (!isOptionalString(content.start)) return 'start doit être string.';
+    if (!isOptionalString(content.end)) return 'end doit être string.';
+    if (!isOptionalString(content.location)) return 'location doit être string.';
+    if (content.bullets != null && !isStringArray(content.bullets)) return 'bullets doit être string[].';
+    return null;
+  },
 };
 
 function validateContentForKind(kind, content) {
