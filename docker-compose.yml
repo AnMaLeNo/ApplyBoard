@@ -68,6 +68,13 @@ services:
     networks:
       - app-net
 
+  langflow:
+      image: langflowai/langflow:latest
+      ports:
+        - "7860:7860"
+      networks:
+        - app-net
+
 networks:
   app-net:
     driver: bridge
