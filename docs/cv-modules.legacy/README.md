@@ -1,5 +1,9 @@
 # Système des Modules de CV
 
+> **Documentation obsolète.** Ce dossier décrit l'ancien système basé sur les tables `cv_modules` et `cv_module_variants`. Depuis le pivot vers la table unique `cv_documents` (un JSONB par utilisateur, variantes au niveau du champ), cette documentation n'est plus d'actualité et n'est pas maintenue. Conservée à titre historique.
+
+---
+
 Documentation technique du système permettant à un utilisateur de stocker, organiser et faire évoluer les **briques réutilisables de son CV** : titre, accroche, formations, projets, hackathons, centres d'intérêt, compétences, expériences professionnelles, modules personnalisés.
 
 À ce stade, la fonctionnalité ne génère pas un CV complet ; elle constitue le **catalogue de briques** sur lequel la génération s'appuiera dans une itération future.

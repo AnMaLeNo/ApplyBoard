@@ -5,14 +5,19 @@ import { initDB } from './db/init.js';
 import authPlugin from './plugins/authenticate.js';
 import authRoutes from './routes/auth.js';
 import offerRoutes from './routes/offers.js';
-import cvModuleRoutes from './routes/cvModules.js';
+import cvDocumentRoutes from './routes/cvDocument.js';
 
-const fastify = Fastify({ logger: true });
+const fastify = Fastify({
+  logger: true,
+  // Surface les propriétés inconnues plutôt que de les stripper silencieusement,
+  // pour que `additionalProperties: false` du schéma cvDocument soit honoré.
+  ajv: { customOptions: { removeAdditional: false } },
+});
 
 await fastify.register(cors, {
   origin: true,
   credentials: true,
-  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type"]
 });
 
@@ -24,7 +29,7 @@ const startServer = async () => {
 
     await fastify.register(authRoutes);
     await fastify.register(offerRoutes);
-    await fastify.register(cvModuleRoutes);
+    await fastify.register(cvDocumentRoutes);
 
     await fastify.listen({ port: 3000, host: '0.0.0.0' });
   } catch (err) {

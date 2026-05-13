@@ -3,12 +3,12 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth.js';
 import { useOffers } from './hooks/useOffers.js';
 import { useGlobalOffers } from './hooks/useGlobalOffers.js';
-import { useCvModules } from './hooks/useCvModules.js';
+import { useCvDocument } from './hooks/useCvDocument.js';
 import AuthScreen from './components/AuthScreen.jsx';
 import Navbar from './components/Navbar.jsx';
 import DashboardPage from './components/DashboardPage.jsx';
 import AllOffersPage from './components/AllOffersPage.jsx';
-import CvModulesPage from './components/CvModulesPage.jsx';
+import CvDocumentPage from './components/CvDocumentPage.jsx';
 
 export default function App() {
   const auth = useAuth();
@@ -28,21 +28,21 @@ export default function App() {
   });
   const { reset: resetGlobalOffers } = globalOffersState;
 
-  const cvModulesState = useCvModules({
-    enabled: auth.authState !== 'out' && currentRoute === 'cv_modules',
+  const cvDocumentState = useCvDocument({
+    enabled: auth.authState !== 'out' && currentRoute === 'cv_document',
     onUnauthorized: auth.markUnauthenticated,
     onAuthenticated: auth.markAuthenticated,
   });
-  const { reset: resetCvModules } = cvModulesState;
+  const { reset: resetCvDocument } = cvDocumentState;
 
   // Purge les registres locaux lorsque la session se ferme.
   useEffect(() => {
     if (auth.authState === 'out') {
       resetOffers();
       resetGlobalOffers();
-      resetCvModules();
+      resetCvDocument();
     }
-  }, [auth.authState, resetOffers, resetGlobalOffers, resetCvModules]);
+  }, [auth.authState, resetOffers, resetGlobalOffers, resetCvDocument]);
 
   if (auth.authState === null) {
     return (
@@ -83,8 +83,8 @@ export default function App() {
         {currentRoute === 'all_offers' && (
           <AllOffersPage globalOffersState={globalOffersState} />
         )}
-        {currentRoute === 'cv_modules' && (
-          <CvModulesPage cvModulesState={cvModulesState} />
+        {currentRoute === 'cv_document' && (
+          <CvDocumentPage cvDocumentState={cvDocumentState} />
         )}
       </main>
     </div>

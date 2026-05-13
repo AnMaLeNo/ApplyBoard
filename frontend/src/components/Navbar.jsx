@@ -3,7 +3,7 @@ import { LayoutDashboard, Database, FileText, LogOut } from 'lucide-react';
 const NAV_ITEMS = [
   { route: 'dashboard', label: "Suivi d'Entités", Icon: LayoutDashboard },
   { route: 'all_offers', label: 'Registre Global', Icon: Database },
-  { route: 'cv_modules', label: 'Modules CV', Icon: FileText },
+  { route: 'cv_document', label: 'Modules CV', Icon: FileText },
 ];
 
 export default function Navbar({ currentRoute, onNavigate, onLogout }) {

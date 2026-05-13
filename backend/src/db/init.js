@@ -42,29 +42,16 @@ export const initDB = async () => {
         PRIMARY KEY (user_id, offer_id)
       );
 
-      CREATE TABLE IF NOT EXISTS cv_modules (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        kind VARCHAR(32) NOT NULL
-          CHECK (kind IN ('title','headline','education','projects',
-                          'hackathons','interests','skills','experience','custom')),
-        name VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-      CREATE INDEX IF NOT EXISTS idx_cv_modules_user_created
-        ON cv_modules(user_id, created_at DESC);
+      DROP TABLE IF EXISTS cv_module_variants;
+      DROP TABLE IF EXISTS cv_modules;
 
-      CREATE TABLE IF NOT EXISTS cv_module_variants (
+      CREATE TABLE IF NOT EXISTS cv_documents (
         id SERIAL PRIMARY KEY,
-        module_id INTEGER NOT NULL REFERENCES cv_modules(id) ON DELETE CASCADE,
-        label VARCHAR(255) NOT NULL,
-        content JSONB NOT NULL DEFAULT '{}'::jsonb,
+        user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        data JSONB NOT NULL DEFAULT '{"cv":{"title":{"variants":[]},"summary":{"variants":[]},"projects":{},"education":{},"hackathons":{},"skills":{"items":[]},"interests":{"items":[]}}}'::jsonb,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-      CREATE INDEX IF NOT EXISTS idx_cv_module_variants_module
-        ON cv_module_variants(module_id, created_at DESC);
     `);
   } finally { // y pas de catch ?
     client.release();
