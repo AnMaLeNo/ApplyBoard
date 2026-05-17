@@ -1,0 +1,2 @@
+"""ApplyBoard AI service package."""
+
