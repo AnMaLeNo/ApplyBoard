@@ -7,6 +7,17 @@ import asyncpg
 from cv_document_mcp.schemas import EMPTY_CV_DOCUMENT
 
 
+def decode_jsonb(value: Any) -> dict[str, Any]:
+    if isinstance(value, str):
+        parsed = json.loads(value)
+        if not isinstance(parsed, dict):
+            raise ValueError("Expected JSONB document to decode to an object")
+        return parsed
+    if isinstance(value, dict):
+        return value
+    raise TypeError(f"Unsupported JSONB value type: {type(value).__name__}")
+
+
 class Database:
     def __init__(self) -> None:
         self._pool: asyncpg.Pool | None = None
@@ -53,7 +64,7 @@ class Database:
         return {
             "id": row["id"],
             "user_id": row["user_id"],
-            "data": row["data"],
+            "data": decode_jsonb(row["data"]),
             "created_at": row["created_at"].isoformat(),
             "updated_at": row["updated_at"].isoformat(),
         }
@@ -76,7 +87,7 @@ class Database:
         return {
             "id": row["id"],
             "user_id": row["user_id"],
-            "data": row["data"],
+            "data": decode_jsonb(row["data"]),
             "created_at": row["created_at"].isoformat(),
             "updated_at": row["updated_at"].isoformat(),
         }

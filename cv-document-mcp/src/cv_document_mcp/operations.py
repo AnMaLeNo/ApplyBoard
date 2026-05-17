@@ -20,15 +20,20 @@ def normalize_text(value: str) -> str:
     return " ".join(value.split()).strip()
 
 
+def clean_text(value: str) -> str:
+    return value.strip()
+
+
 def append_unique(existing: list[str], new_values: list[str]) -> int:
     seen = {normalize_text(value) for value in existing if normalize_text(value)}
     added = 0
     for raw_value in new_values:
-        value = normalize_text(raw_value)
-        if not value or value in seen:
+        value = clean_text(raw_value)
+        normalized = normalize_text(value)
+        if not value or normalized in seen:
             continue
         existing.append(value)
-        seen.add(value)
+        seen.add(normalized)
         added += 1
     return added
 
