@@ -70,6 +70,25 @@ services:
     profiles:
       - db-tools
 
+
+  cv-document-mcp:
+    build:
+      context: ./cv-document-mcp
+    environment:
+      DATABASE_URL: postgres://admin:securepassword@database:5432/offers_db
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8002
+      MCP_TRANSPORT: streamable-http
+    ports:
+      - "8002:8002"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app-net
+    profiles:
+      - ai-tools
+
   langflow:
     image: langflowai/langflow:latest
     ports:
