@@ -115,3 +115,43 @@ class AnalyzeOfferResponse(BaseModel):
 
     offer_analysis: OfferAnalysis
 
+
+class TitleSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    selected_index: int | None = Field(
+        default=None,
+        ge=0,
+        description="Index of the selected title variant, or null when none is sufficient.",
+    )
+    selected_title: str | None = Field(
+        default=None,
+        description="Exact selected title variant, or null when none is sufficient.",
+    )
+    is_sufficient: bool = Field(
+        description="True only when one existing title variant matches the offer sufficiently."
+    )
+    confidence: float = Field(ge=0, le=1)
+    rationale: str = Field(description="Short explanation of the selection decision.")
+    matched_signals: list[str] = Field(default_factory=list)
+    missing_signals: list[str] = Field(default_factory=list)
+
+
+class SelectTitleInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    offer_analysis: OfferAnalysis
+    title_variants: list[str] = Field(default_factory=list)
+
+
+class SelectTitleRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    offer_analysis: OfferAnalysis
+    title_variants: list[str] = Field(default_factory=list)
+
+
+class SelectTitleResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title_selection: TitleSelection

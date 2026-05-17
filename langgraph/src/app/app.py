@@ -4,7 +4,13 @@ from fastapi import FastAPI
 
 from app.llm import JsonLLMClient, create_llm_client_from_env
 from app.nodes.analyze_offer import analyze_offer
-from app.schemas import AnalyzeOfferRequest, AnalyzeOfferResponse
+from app.nodes.select_title import select_title
+from app.schemas import (
+    AnalyzeOfferRequest,
+    AnalyzeOfferResponse,
+    SelectTitleRequest,
+    SelectTitleResponse,
+)
 
 app = FastAPI(title="ApplyBoard AI Service")
 
@@ -24,3 +30,8 @@ async def analyze_offer_endpoint(payload: AnalyzeOfferRequest) -> AnalyzeOfferRe
     analysis = await analyze_offer(payload.offer, get_llm_client())
     return AnalyzeOfferResponse(offer_analysis=analysis)
 
+
+@app.post("/select-title", response_model=SelectTitleResponse)
+async def select_title_endpoint(payload: SelectTitleRequest) -> SelectTitleResponse:
+    selection = await select_title(payload.model_dump(mode="json"), get_llm_client())
+    return SelectTitleResponse(title_selection=selection)

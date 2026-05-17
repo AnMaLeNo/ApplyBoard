@@ -6,12 +6,13 @@ CV drafts from tracked offers and a user's CV document.
 Current scope:
 
 - scaffold the AI service as an independent Python project;
-- implement the first LLM node: `analyze_offer`;
+- implement bounded LLM nodes: `analyze_offer` and `select_title`;
 - keep node inputs and outputs JSON-shaped and validated with Pydantic;
 - keep prompt templates explicit and versioned on disk.
 
-The `analyze_offer` node only analyzes the offer. It does not read the CV
-document and it does not select CV variants.
+The `analyze_offer` node only analyzes the offer. The `select_title` node
+receives that analysis plus the available title variants and selects at most one
+existing title. It never rewrites or creates a title.
 
 
 ## LLM provider
@@ -64,3 +65,28 @@ uv run python scripts/analyze_offer_from_db.py --offer-id 27458
 
 The script reads offers through `docker compose exec database psql`, then sends
 them to the configured LLM provider.
+
+## Select a title variant
+
+`select_title` expects the JSON produced by `analyze_offer` and the full list of
+available title variants from `cv_documents.cv.title.variants`. It returns the
+same JSON shape whether a title is selected or no sufficient variant exists.
+
+```bash
+curl -X POST http://localhost:8000/select-title \
+  -H "Content-Type: application/json" \
+  -d '{
+    "offer_analysis": {
+      "role": {"title":"Fullstack Developer","seniority":"internship","confidence":0.9},
+      "company_context": {"company":"Example","domain":"software","work_environment":[],"confidence":0.8},
+      "responsibilities": [],
+      "technical_skills": [],
+      "soft_skills": [],
+      "profile_target": {"summary":"Fullstack internship profile","signals":["fullstack"]},
+      "priorities": [],
+      "keywords": ["fullstack"],
+      "uncertainties": []
+    },
+    "title_variants": ["Développeur Backend", "Développeur Fullstack"]
+  }'
+```
